@@ -6,6 +6,7 @@
   - Graphic Card: NVIDIA GeForce GTX1660Ti
 
 ### Code Optimization 기법
+- Locality
 - Common Subexpression Elimination
 - Loop Unrolling
 - Function Inlining
