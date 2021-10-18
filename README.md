@@ -88,6 +88,15 @@
     <img width="600" alt="image" src="https://user-images.githubusercontent.com/57051773/137668149-406704c6-1f7e-47d0-b795-147dcc1477e5.png">
     - Common Subexpression Elimination을 수행한 코드가 빠른 것을 확인할 수 있음
 - Loop Unrolling
+  - 개념
+    - Loop안의 내용을 펼쳐서 비교와 관련된 연산을 줄여 코드를 최적화하는 것
+  - 개요
+    - Loop에서는 지정된 범위에 도달했는지의 여부에 대해 검사하기 위해, 값을 비교하고 증가 및 감소 시키는 작업이 진행됨
+    - Loop를 펼쳐서 이러한 과정을 줄이게 됨
+    - 따라서 속도가 빠를 것임
+  - 코드
+  - 결과
+  
 - Function Inlining
 - Code Motion
 - Instruction Scheduling
