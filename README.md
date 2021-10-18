@@ -45,10 +45,48 @@
       }
       ```
   - 결과<br>
-    ![image](https://user-images.githubusercontent.com/57051773/137341608-ad05ca07-058c-4c8b-98ec-307a459f9ab3.png)
+    <img width="400" alt="image" src="https://user-images.githubusercontent.com/57051773/137341608-ad05ca07-058c-4c8b-98ec-307a459f9ab3.png">
     - Locality를 고려한 코드가 빠른 것을 확인할 수 있음
 
 - Common Subexpression Elimination
+  - 개념
+    - 같은 코드를 중복으로 실행하지 않고, 해당 코드를 한번 실행한 값을 저장하고 해당 값을 사용함으로써 최적화하는 것
+  - 개요
+    - pow(b, c) 코드는 b의 c제곱을 실행하는 함수임
+    - 코드 전반에 걸쳐 공통적으로 사용되는 pow(b, c)를 common이라는 변수에 저장하여 이를 사용
+    - 따라서 속도가 빠를 것임
+  - 코드
+    - Common Subexpression Elimination을 하지 않은 경우
+      ```
+      void without_cse(float a, float b, float c, float* result)
+      {
+	      for (int i = 0; i < N * N; i++)
+	      {
+		      //result를 구하는 연산에 pow(b, c)가 여러번 들어감
+		      *result += pow(b, c) + pow(b, c) * a;
+		      *result -= pow(b, c) - pow(b, c) + b;
+		      b++; c++;
+	      }
+      }
+      ```
+    - Common Subexpression Elimination을 수행한 경우
+      ```
+      void with_cse(float a, float b, float c, float* result)
+      {
+	      for (int i = 0; i < N * N; i++)
+	      {
+		      //공통적으로 들어가는 pow(b,c)를 common이라는 변수에 저장해주고
+		      //이를 result값 계산에 사용
+		      double common = pow(b, c);
+		      *result += common + common * a;
+		      *result -= common - common + b;
+		      b++; c++;
+	      }
+      }
+      ```
+  - 결과<br>
+    <img width="600" alt="image" src="https://user-images.githubusercontent.com/57051773/137668149-406704c6-1f7e-47d0-b795-147dcc1477e5.png">
+    - Common Subexpression Elimination을 수행한 코드가 빠른 것을 확인할 수 있음
 - Loop Unrolling
 - Function Inlining
 - Code Motion
