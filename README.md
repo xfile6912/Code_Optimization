@@ -118,7 +118,8 @@
         }
     }
     ```
-  - 결과
+  - 결과<br>
+    <img width="500" alt="image" src="https://user-images.githubusercontent.com/57051773/137896397-8b9eb888-681c-41b3-a80f-5b7e6bb59f2e.png">
     - Loop Unrolling을 수행한 코드가 더 빠른 것을 확인할 수 있음
 - Function Inlining
   - 개념
