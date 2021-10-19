@@ -1,4 +1,4 @@
-# Code_Optimization Test(C Language)
+# Code_Optimization Test(C++ Language)
 ### Environment
   - Processor: Intel(R) Core(TM) i5-9600KF CPU @ 3.70GHz 3.70GHz
   - RAM : 16GB
@@ -121,6 +121,15 @@
   - 결과
     - Loop Unrolling을 수행한 코드가 더 빠른 것을 확인할 수 있음
 - Function Inlining
+  - 개념
+    - 작은 크기의 함수의 경우에는, 함수로 따로 만들지 않고 로직을 그대로 코드에 삽입하여 최적화
+  - 개요
+    - 함수를 호출하게 되면, return adress를 스택에 저장하고 해당 함수로 jump하게 됨
+    - 또한 함수에서 사용되는 일반적인 register를 스택에 백업하고, register 값을 복원하는 과정을 거치면서 시간이 소요되게 된다.
+    - 작은 크기의 함수의 경우, 함수로 따로 만들지 않고 로직을 그대로 코드에 삽입하여 시간을 줄이게 됨
+    - 따라서 속도가 빠를 것임
+  - 코드
+  - 결과
 - Code Motion
 - Instruction Scheduling
 ### CPU(Thread num)
