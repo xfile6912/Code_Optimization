@@ -46,7 +46,7 @@
       ```
   - 결과<br>
     <img width="400" alt="image" src="https://user-images.githubusercontent.com/57051773/137341608-ad05ca07-058c-4c8b-98ec-307a459f9ab3.png">
-    - Locality를 고려한 코드가 빠른 것을 확인할 수 있음
+    - Locality를 고려한 코드가 더 빠른 것을 확인할 수 있음
 
 - Common Subexpression Elimination
   - 개념
@@ -86,7 +86,7 @@
       ```
   - 결과<br>
     <img width="600" alt="image" src="https://user-images.githubusercontent.com/57051773/137668149-406704c6-1f7e-47d0-b795-147dcc1477e5.png">
-    - Common Subexpression Elimination을 수행한 코드가 빠른 것을 확인할 수 있음
+    - Common Subexpression Elimination을 수행한 코드가 더 빠른 것을 확인할 수 있음
 - Loop Unrolling
   - 개념
     - Loop안의 내용을 펼쳐서 비교와 관련된 연산을 줄여 코드를 최적화하는 것
@@ -95,8 +95,31 @@
     - Loop를 펼쳐서 이러한 과정을 줄이게 됨
     - 따라서 속도가 빠를 것임
   - 코드
+    - Loop Unrolling를 하지 않은 코드
+    ```
+    void without_loop_unrolling(float* a, float* result)
+    {
+        for (int i = 0; i < pow(N, 2); i++)//값을 비교하는 작업에서의 시간을 확실히 비교하기 위해 N*N을 사용한 것이 아닌 pow(N, 2)사용
+        {
+	   	*result += a[i];
+        }
+    }
+    ```
+    - Loop Unrolling를 한 코드의 경우
+    ```
+    void with_loop_unrolling(float* a, float* result)
+    {
+        for (int i = 0; i < pow(N, 2); i+=4)//값을 비교하는 작업에서의 시간을 확실히 비교하기 위해 N*N을 사용한 것이 아닌 pow(N, 2)사용
+        {
+		*result += a[i];
+		*result += a[i + 1];
+		*result += a[i + 2];
+		*result += a[i + 3];
+        }
+    }
+    ```
   - 결과
-  
+    - Loop Unrolling을 수행한 코드가 더 빠른 것을 확인할 수 있음
 - Function Inlining
 - Code Motion
 - Instruction Scheduling
