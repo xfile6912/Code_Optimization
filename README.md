@@ -25,8 +25,8 @@
             result[i * N + j] += a[i * N + k] * b[k * N + j];
             //매 iteration마다 b를 접근할 때에, 연속적인 memory 영역을 접근하는 것이 아닌, 띄엄띄엄 접근하게 됨 
             //spatial locality를 고려하지 않음.
-            }
           }
+        }
       }
       ```
     - Locality를 고려하지 않은 경우<br>
@@ -40,8 +40,8 @@
             result[i * N + j] += a[i * N + k] * transpose_b[j * N + k];
             //transpose_b를 사용하여, 매 iteration마다 b를 접근할 때, 연속적인 memory 영역을 접근할 수 있음
             //spatial locality를 고려
-            }
           }
+        }
       }
       ```
   - 결과<br>
@@ -130,8 +130,68 @@
     - 작은 크기의 함수의 경우, 함수로 따로 만들지 않고 로직을 그대로 코드에 삽입하여 시간을 줄이게 됨
     - 따라서 속도가 빠를 것임
   - 코드
-  - 결과
+    - Function Inlining을 하지 않은 코드의 경우
+      ```
+      float add_func(float a, float b)
+      {
+            float ret = a + b;
+            return ret;
+      }
+      void without_function_inlining(float* a, float* b, float* result)
+      {
+            for (int i = 0; i < pow(N, 2); i++)
+            {
+                      *result += add_func(a[i], b[i]);
+            }
+      }
+      ```
+    - Function Inlining을 한 코드의 경우
+      ```
+      void with_function_inlining(float* a, float* b, float* result)
+      {
+            for (int i = 0; i < pow(N, 2); i++)
+            {
+                     *result += a[i] + b[i];
+            }
+      }
+      ```
+  - 결과<br>
+    <img width="450" alt="image" src="https://user-images.githubusercontent.com/57051773/138059151-6c8f3314-9be7-4666-9bd1-7479ba3000c5.png">
+    - Function Inlining을 수행한 코드가 더 빠른 것을 확인할 수 있음
 - Code Motion
+  - 개념
+    - 기존의 코드를 새로운 위치로 이동함으로써 최적화
+  - 개요
+    - a + pow(b, c)는 반복문 안에서 지속적인 시간을 소요하지만 따로 값의 변화가 일어나지는 않음
+    - a + pow(b, c)를 반복문 바깥으로 옮김으로써 이러한 지속적인 시간소요를 줄이게 됨
+    - 따라서 속도가 빠를 것임
+  - 코드
+    - Code Motion을 하지 않은 코드의 경우
+      ```
+      void without_code_motion(float a, float b, float c, float* result)
+      {
+           for (int i = 0; i < N * N; i++)
+           {
+	          //result를 구할 때에 a+pow(b,c)가 들어가게 되는데 이 값은 루프를 돌면서 변하지 않음
+	          *result += (i % 5) + a + pow(b, c);
+           }
+      }
+      ```
+    - Code Motion을 한 코드의 경우
+      ```
+      void with_code_motion(float a, float b, float c, float* result)
+      {
+           //따라서 code_motion에서는 a + pow(b,c)를 for문 밖으로 옮겨줌
+           float temp = a + pow(b, c);
+           for (int i = 0; i < N * N; i++)
+           {
+                   *result += (i % 5) + temp;
+           }
+      }     
+      ```
+  - 결과<br>
+    <img width="400" alt="image" src="https://user-images.githubusercontent.com/57051773/138059197-54337595-e9ac-422f-b153-2aa8ed5e5f72.png">
+    - Code Motion을 수행한 코드가 더 빠른 것을 확인할 수 있음
 - Instruction Scheduling
 ### CPU(Thread num)
 - 
