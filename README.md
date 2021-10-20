@@ -194,7 +194,12 @@
     - Code Motion을 수행한 코드가 더 빠른 것을 확인할 수 있음
 - Instruction Scheduling
 ### CPU(Thread num)
-- 
+- Environment
+  - 해당 실험만 Unix기반의 Mac OS에서 테스트
+  - Processor: 2.6GHz 6코어 Intel Core i7
+  - RAM : 16GB 2667MHz DDR4
+  - macOS Big Sur, MacBook Pro(16inch, 2019)
+  - Graphic Card: Intel UHD Graphics 630 1536MB
 ### CPU vs GPU(CUDA)
 - 
 ### GPU(Non Shared Memory) vs GPU(Shared Memory)
