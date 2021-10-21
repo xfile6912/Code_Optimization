@@ -193,13 +193,61 @@
     <img width="400" alt="image" src="https://user-images.githubusercontent.com/57051773/138059197-54337595-e9ac-422f-b153-2aa8ed5e5f72.png">
     - Code Motion을 수행한 코드가 더 빠른 것을 확인할 수 있음
 - Instruction Scheduling
-### CPU(Thread num)
+### CPU(Thread Num)
 - Environment
   - 해당 실험만 Unix기반의 Mac OS에서 테스트
   - Processor: 2.6GHz 6코어 Intel Core i7
   - RAM : 16GB 2667MHz DDR4
   - macOS Big Sur, MacBook Pro(16inch, 2019)
   - Graphic Card: Intel UHD Graphics 630 1536MB
+  - 1부터 N-1까지를 더하는 코드를 각 경우에 맞게 작성하여 시간을 측정
+- Global Variable만을 활용하는 경우
+  - 개요
+    - 모든 thread에서 공유하는 global_sum이라는 공유변수를 이용
+    - 각 thread에서는 자신이 맡은 범위까지의 덧셈을 global_sum에 반영
+    - 해당 과정에서 각 thread가 global_sum에 접근할 때는 올바른 값의 도출을 위해 semaphore로 감싸주게 됨
+  - 코드
+    ```
+    //각 thread가 실행할 함수
+    void *sum_global_variable(void *vargp)
+    {
+          //num_per_thread의 값은 read만 하기 때문에 따로 semaphore로 감싸줄 필요가 없음
+          long id=(*(long*)vargp);
+          long start = id*num_per_thread;
+          long end =start + num_per_thread;
+          if(end>N)
+                end=N;
+    
+          long i;
+          for(i=start; i<end; i++)
+          {
+               P(&mutex);
+               global_sum+=i;//global_sum이라는 공유데이터를 변경하는 코드영역, 즉 크리티컬섹션을 semaphore로 감싸줌
+               V(&mutex);
+          }
+          return NULL;
+    }
+    ```
+  - 실행방법
+    ```
+    $ gcc sum_global_variable.c csapp.c
+    $ ./a.out [thread의 개수(필수)]
+    ```
+  - 결과<br>
+    <img width="500" alt="image" src="https://user-images.githubusercontent.com/57051773/138197534-8fcdcb2d-a618-47fe-9cf0-7e7dca5e79b9.png">
+    - thread의 수를 늘림에도 불구하고, 오히려 느려지는 것을 확인할 수 있음.
+    - 이는 매번 더할 때마다 semaphore작업이 동반되므로 이에 의한 Overhead가 발생하기 때문임
+- Global Array를 사용해 Mutex Overhead를 줄인 경우
+  - 개요
+    - 메인 thread에서는 global_sum이라는 변수를 이용
+    - 모든 thread에서는 global_array라는 공유변수 배열을 이용
+    - 각 thread는 자신이 맡은 범위까지의 덧셈을 수행하여 자신이 담당하는 global_array의 해당 index에 저장
+    - 마지막으로 메인 thread가 이러한 global_array의 값들을 취합하여 global_sum에 최종 값을 저장
+  - 코드
+  - 실행방법
+  - 결과<br>
+- Thread내의 Local Variable을 사용해 Register를 사용하도록 한 경우
+- 결과 정리
 ### CPU vs GPU(CUDA)
 - 
 ### GPU(Non Shared Memory) vs GPU(Shared Memory)
