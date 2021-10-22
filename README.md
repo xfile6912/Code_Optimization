@@ -237,8 +237,39 @@
     - 각 thread는 자신이 맡은 범위까지의 덧셈을 수행하여 자신이 담당하는 global_array의 해당 index에 저장
     - 마지막으로 메인 thread가 이러한 global_array의 값들을 취합하여 global_sum에 최종 값을 저장
   - 코드
+    ```
+    //메인 thread에서 최종적으로 global_array의 내용들을 취합해서 sum을 하는 과정
+    void total_sum(int thread_num)
+    {
+        long i;
+        for (i = 0; i < thread_num; i++)
+            global_sum += global_array[i];
+    }
+    //각 thread가 실행할 함수
+    void sum_global_array(void* vargp)
+    {
+        //num_per_thread의 값은 read만 하기 때문에 따로 semaphore로 감싸줄 필요가 없음
+        long id = (*(long*)vargp);
+        long start = id * num_per_thread;
+        long end = start + num_per_thread;
+        if (end > N)
+            end = N;
+
+        long i;
+        for (i = start; i < end; i++)
+        {
+            global_array[id] += i;//global_array의 자신이 담당하는 index에, 자신이 맡은 영역의 sum을 저장해줌
+        }
+    }
+    ```
   - 실행방법
+    ```
+    $ cl sum_global_array.cpp
+    $ ./sum_global_array.exe [thread의 개수(필수)]
+    ```
   - 결과<br>
+    ![image](https://user-images.githubusercontent.com/57051773/138445120-a997c1dc-6f7f-4f8d-8208-65d95d60c6ec.png)
+
 - Thread내의 Local Variable을 사용해 Register를 사용하도록 한 경우
 - 결과 정리
 ### CPU vs GPU(CUDA)
