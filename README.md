@@ -194,13 +194,7 @@
     - Code Motion을 수행한 코드가 더 빠른 것을 확인할 수 있음
 - Instruction Scheduling
 ### CPU(Thread Num)
-- Environment
-  - 해당 실험만 Unix기반의 Mac OS에서 테스트
-  - Processor: 2.6GHz 6코어 Intel Core i7
-  - RAM : 16GB 2667MHz DDR4
-  - macOS Big Sur, MacBook Pro(16inch, 2019)
-  - Graphic Card: Intel UHD Graphics 630 1536MB
-  - 1부터 N-1까지를 더하는 코드를 각 경우에 맞게 작성하여 시간을 측정
+##### 1부터 N-1까지를 더하는 코드를 각 경우에 맞게 작성하여 시간을 측정
 - Global Variable만을 활용하는 경우
   - 개요
     - 모든 thread에서 공유하는 global_sum이라는 공유변수를 이용
@@ -209,32 +203,31 @@
   - 코드
     ```
     //각 thread가 실행할 함수
-    void *sum_global_variable(void *vargp)
+    void sum_global_variable(void* vargp)
     {
-          //num_per_thread의 값은 read만 하기 때문에 따로 semaphore로 감싸줄 필요가 없음
-          long id=(*(long*)vargp);
-          long start = id*num_per_thread;
-          long end =start + num_per_thread;
-          if(end>N)
-                end=N;
-    
-          long i;
-          for(i=start; i<end; i++)
-          {
-               P(&mutex);
-               global_sum+=i;//global_sum이라는 공유데이터를 변경하는 코드영역, 즉 크리티컬섹션을 semaphore로 감싸줌
-               V(&mutex);
-          }
-          return NULL;
+        //num_per_thread의 값은 read만 하기 때문에 따로 semaphore로 감싸줄 필요가 없음
+        long id = (*(long*)vargp);
+        long start = id * num_per_thread;
+        long end = start + num_per_thread;
+        if (end > N)
+            end = N;
+
+        long i;
+        for (i = start; i < end; i++)
+        {
+            lock_mutex.lock();
+            global_sum += i;//global_sum이라는 공유데이터를 변경하는 코드영역, 즉 크리티컬섹션을 semaphore로 감싸줌
+            lock_mutex.unlock();
+        }
     }
     ```
   - 실행방법
     ```
-    $ gcc sum_global_variable.c csapp.c
-    $ ./a.out [thread의 개수(필수)]
+    $ cl sum_global_variable.cpp
+    $ ./sum_global_varaible.exe [thread의 개수(필수)]
     ```
   - 결과<br>
-    <img width="500" alt="image" src="https://user-images.githubusercontent.com/57051773/138197534-8fcdcb2d-a618-47fe-9cf0-7e7dca5e79b9.png">
+    ![image](https://user-images.githubusercontent.com/57051773/138217784-fdff6af3-e846-472b-9e1e-2a4fb5f8c770.png)
     - thread의 수를 늘림에도 불구하고, 오히려 느려지는 것을 확인할 수 있음.
     - 이는 매번 더할 때마다 semaphore작업이 동반되므로 이에 의한 Overhead가 발생하기 때문임
 - Global Array를 사용해 Mutex Overhead를 줄인 경우
@@ -244,8 +237,39 @@
     - 각 thread는 자신이 맡은 범위까지의 덧셈을 수행하여 자신이 담당하는 global_array의 해당 index에 저장
     - 마지막으로 메인 thread가 이러한 global_array의 값들을 취합하여 global_sum에 최종 값을 저장
   - 코드
+    ```
+    //메인 thread에서 최종적으로 global_array의 내용들을 취합해서 sum을 하는 과정
+    void total_sum(int thread_num)
+    {
+        long i;
+        for (i = 0; i < thread_num; i++)
+            global_sum += global_array[i];
+    }
+    //각 thread가 실행할 함수
+    void sum_global_array(void* vargp)
+    {
+        //num_per_thread의 값은 read만 하기 때문에 따로 semaphore로 감싸줄 필요가 없음
+        long id = (*(long*)vargp);
+        long start = id * num_per_thread;
+        long end = start + num_per_thread;
+        if (end > N)
+            end = N;
+
+        long i;
+        for (i = start; i < end; i++)
+        {
+            global_array[id] += i;//global_array의 자신이 담당하는 index에, 자신이 맡은 영역의 sum을 저장해줌
+        }
+    }
+    ```
   - 실행방법
+    ```
+    $ cl sum_global_array.cpp
+    $ ./sum_global_array.exe [thread의 개수(필수)]
+    ```
   - 결과<br>
+    ![image](https://user-images.githubusercontent.com/57051773/138445120-a997c1dc-6f7f-4f8d-8208-65d95d60c6ec.png)
+
 - Thread내의 Local Variable을 사용해 Register를 사용하도록 한 경우
 - 결과 정리
 ### CPU vs GPU(CUDA)
