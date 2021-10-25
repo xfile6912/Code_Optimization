@@ -198,7 +198,7 @@
 - Global Variable만을 활용하는 경우
   - 개요
     - 모든 thread에서 공유하는 global_sum이라는 공유변수를 이용
-    - 각 thread에서는 자신이 맡은 범위까지의 덧셈을 global_sum에 반영
+    - 각 thread에서는 자신이 맡은 범위까지의 덧셈을 바로바로 global_sum에 반영
     - 해당 과정에서 각 thread가 global_sum에 접근할 때는 올바른 값의 도출을 위해 semaphore로 감싸주게 됨
   - 코드
     ```
@@ -221,15 +221,11 @@
         }
     }
     ```
-  - 실행방법
-    ```
-    $ cl sum_global_variable.cpp
-    $ ./sum_global_varaible.exe [thread의 개수(필수)]
-    ```
   - 결과<br>
-    ![image](https://user-images.githubusercontent.com/57051773/138217784-fdff6af3-e846-472b-9e1e-2a4fb5f8c770.png)
-    - thread의 수를 늘림에도 불구하고, 오히려 느려지는 것을 확인할 수 있음.
-    - 이는 매번 더할 때마다 semaphore작업이 동반되므로 이에 의한 Overhead가 발생하기 때문임
+    <img width="500" alt="image" src="https://user-images.githubusercontent.com/57051773/138621033-10a63fc8-adf7-4807-887b-8fb7ebc40850.png">
+    - thread의 수를 늘림에도 불구하고, 오히려 느려지는 것을 확인할 수 있음
+    - 하나의 공유 데이터에 접근하기 때문에, thread를 사용하더라도 semaphore를 통해 순차적으로 접근하는 것과 같음
+    - 또한 매번 더할 때마다 semaphore에 의한 overhead가 발생하기 때문임
 - Global Array를 사용해 Mutex Overhead를 줄인 경우
   - 개요
     - 메인 thread에서는 global_sum이라는 변수를 이용
@@ -262,16 +258,61 @@
         }
     }
     ```
-  - 실행방법
+  - 결과<br>
+    <img width="500" alt="image" src="https://user-images.githubusercontent.com/57051773/138621083-7291746f-4549-476c-a986-dafd8b3d9879.png">
+    - Thread의 수가 적절히 많아질 수록 속도가 빨라지는 경향을 확인할 수 있음
+      - 따라서 프로세서의 Core 수에 따라 적절히 Thread의 수를 정해주는 것이 필요
+    - Global Variable에 비해 속도가 빠른 것을 확인 할 수 있음
+      - 각 Thread는 Global Array의 자신의 Index에 해당하는 부분만 접근하기 때문에 Semaphore를 사용하지 않음
+      - 이를 통해 Semaphore에 따른 Overhead가 줄어들었기 때문에 속도가 빨라짐
+- Thread내의 Local Variable을 사용해 Register를 사용하도록 한 경우
+  - 개요
+    - 메인 thread에서는 global_sum이라는 변수를 이용
+    - 모든 thread에서는 global_array라는 공유변수 배열을 이용
+    - 모든 thread에서는 local_sum이라는 지역변수를 이용
+    - 각 thread는 자신이 맡은 범위까지의 덧셈의 과정을 자신의 지역변수인 local_sum을 이용해 수행
+    - 각 thread는 최종적으로 local_sum의 값을 global_array의 자신이 담당하는 index의 위치에 대입
+    - 마지막으로 메인 thread가 이러한 global_array의 값들을 취합하여 global_sum에 최종 값을 저장
+  - 코드
     ```
-    $ cl sum_global_array.cpp
-    $ ./sum_global_array.exe [thread의 개수(필수)]
+    //메인 thread에서 최종적으로 global_array의 내용들을 취합해서 sum을 하는 과정
+    void total_sum(int thread_num)
+    {
+        long i;
+        for (i = 0; i < thread_num; i++)
+            global_sum += global_array[i];
+    }
+    //각 thread가 실행할 함수
+    void sum_local_register(void* vargp)
+    {
+        long id = (*(long*)vargp);
+        long start = id * num_per_thread;
+        long end = start + num_per_thread;
+        //thread에 local변수를 만들어서 이를 이용하도록 하여
+        //메인 메모리에 대한 접근을 줄이고
+        //(컴파일러가 최적화 하면서 local변수는 register를 이용하도록 하기 때문에)
+        //메인 메모리 영역에 있는 global_array는 
+        //한번만 접근하게 해줌으로써 속도를 높임
+        long long local_sum = 0;
+        if (end > N)
+            end = N;
+
+        long i;
+        for (i = start; i < end; i++)
+        {
+             local_sum += i;//local_sum을 이용해 자신이 맡은 영역의 sum을 계산해주도록 함
+        }
+
+        //global array는 각 thread마다 한번만 접근함
+        global_array[id] = local_sum;
+    }
     ```
   - 결과<br>
-    ![image](https://user-images.githubusercontent.com/57051773/138445120-a997c1dc-6f7f-4f8d-8208-65d95d60c6ec.png)
-
-- Thread내의 Local Variable을 사용해 Register를 사용하도록 한 경우
-- 결과 정리
+    <img width="500" alt="image" src="https://user-images.githubusercontent.com/57051773/138621714-6376341c-745d-4336-8f5f-9b9f8dad5f92.png">
+    - Thread의 수가 적절히 많아질 수록 속도가 빨라지는 경향을 확인할 수 있음
+      - 따라서 프로세서의 Core 수에 따라 적절히 Thread의 수를 정해주는 것이 필요
+    - Global Array에 비해 속도가 빠른 것을 확인 할 수 있음
+      - 각 thread에서 계산시 지역변수(local_sum)을 이용하게 되면 Compiler에 의해 Register를 사용하도록 하기 때문에 Memory Reference가 줄어들게 되고 속도가 더 빨라짐
 ### CPU vs GPU(CUDA)
 - 
 ### GPU(Non Shared Memory) vs GPU(Shared Memory)
