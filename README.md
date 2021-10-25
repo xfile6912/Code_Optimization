@@ -313,6 +313,16 @@
       - 따라서 프로세서의 Core 수에 따라 적절히 Thread의 수를 정해주는 것이 필요
     - Global Array에 비해 속도가 빠른 것을 확인 할 수 있음
       - 각 thread에서 계산시 지역변수(local_sum)을 이용하게 되면 Compiler에 의해 Register를 사용하도록 하기 때문에 Memory Reference가 줄어들게 되고 속도가 더 빨라짐
+- Thread의 수 정리
+  - CPU를 많이 사용하는 작업의 경우
+    - N개의 CPU가 있으면 N+1개의 Thread를 두는 것이 좋음
+  - I/O 및 다른 블로킹이 많은 작업의 경우
+    - 작은 수의 Thread를 사용하게 되면 모든 Thread가 I/O작업을 기다리게 되는 경우(대기시간)가 생길 수 있게 되고 이런 경우에는 CPU는 일을 안하는 상태가 됨
+    - 따라서 많은 수의 Thread를 두는 것이 좋음
+  - 공식
+    ```
+    Thread의 수 = CPU의 개수 * CPU활용도[0~1] * (1 + 작업시간 대비 대기시간의 비율)
+    ```
 ### CPU vs GPU(CUDA)
 - 
 ### GPU(Non Shared Memory) vs GPU(Shared Memory)
