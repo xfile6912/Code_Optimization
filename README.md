@@ -1,9 +1,11 @@
 # Code_Optimization Test(C++ Language)
 ### Environment
   - Processor: Intel(R) Core(TM) i5-9600KF CPU @ 3.70GHz 3.70GHz
+    - 6 Cores, 6 Threads
   - RAM : 16GB
   - x64 기반 프로세서, Windows10
-  - Graphic Card: NVIDIA GeForce GTX1660Ti
+  - Graphic Card: NVIDIA GeForce GTX1660Ti 6GB
+    - 1536 Cuda Cores, 24 SM(Streaming Multiprocessor)s
 
 ### Code Optimization 기법
 - Spatial Locality
@@ -324,6 +326,17 @@
     Thread의 수 = CPU의 개수 * CPU활용도[0~1] * (1 + 작업시간 대비 대기시간의 비율)
     ```
 ### CPU vs GPU(CUDA)
-- 
+##### 두 Array의 합을 구하는 코드를 통해 테스트
+- 사전지식(GPU)
+  - 1660Ti는 1536개의 CUDA 코어와, 24개의 SM(Streaming Multiprocessor)로 구성
+    - 하나의 SM에는 1536/24 = 64개의 CUDA 코어가 포함되어 있음
+  - 동일한 연산이 서로 다른 데이터에 대해 반복되고, 각 연산이 서로 독립적인 경우, GPU를 사용하는 것이 유리
+    - SIMD방식: 하나의 연산을 동일한 형태로 존재하는 서로 다른 데이터 각각에 대해 병렬적으로 수행시키는 방법
+  - 특정 데이터에 대한 연산을 하나의 Task(thread)라고 하고, Task는 하나의 코어에서 작업을 처리하게 됨
+  - 전체 Task들은 각각 동일한 개수의 Task를 가지도록 Thread Block(Task들의 그룹)으로 나뉘고, 같은 Thread Block내의 모든 Task들은 모두 동일한 SM에서 병렬적으로 처리가 됨
+    - 1660Ti의 경우, 하나의 SM에 64개의 코어를 가지고 있으므로 Thread Block의 크기를 64 이상으로 하는 것이 성능 향상에 좋을 것이라고 예측해볼 수 있음
+      - 64보다 작은 경우에는, 하나의 SM 내에서 놀게되는 코어가 생길 것이기 때문에
+    - 실질적으로는, Thread Block이 Warp라는 단위로 또 나뉘어, SM에서 Warp 단위로 병렬적으로 처리가 되고 Warp들 사이의 순서는 알수 없음
+
 ### GPU(Non Shared Memory) vs GPU(Shared Memory)
 - 
