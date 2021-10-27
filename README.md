@@ -327,7 +327,7 @@
     ```
 ### CPU vs GPU(CUDA)
 ##### 두 Array의 합을 구하는 코드를 통해 테스트
-- 사전지식(GPU)
+- 사전지식 및 예측(GPU)
   - 1660Ti는 1536개의 CUDA 코어와, 24개의 SM(Streaming Multiprocessor)로 구성
     - 하나의 SM에는 1536/24 = 64개의 CUDA 코어가 포함되어 있음
   - 동일한 연산이 서로 다른 데이터에 대해 반복되고, 각 연산이 서로 독립적인 경우, GPU를 사용하는 것이 유리
@@ -337,6 +337,75 @@
     - 1660Ti의 경우, 하나의 SM에 64개의 코어를 가지고 있으므로 Thread Block의 크기를 64 이상으로 하는 것이 성능 향상에 좋을 것이라고 예측해볼 수 있음
       - 64보다 작은 경우에는, 하나의 SM 내에서 놀게되는 코어가 생길 것이기 때문에
     - 실질적으로는, Thread Block이 Warp라는 단위로 또 나뉘어, SM에서 Warp 단위로 병렬적으로 처리가 되고 Warp들 사이의 순서는 알수 없음
-
+  - CPU vs GPU
+    - CPU : 순차적으로 데이터를 처리하는 방식에 특화된 구조, GPU에 비해 한 개의 코어가 가지고 있는 ALU의 개수가 적음
+    - GPU : 여러 명령을 동시에 처리하는 병렬 처리에 특화된 구조, CPU에 비해 한 개의 코어가 가지고 있는 ALU의 개수가 많음
+    - 따라서, CPU에 비해 많은 코어를 가지고 있고, 병렬 처리에 특화되어 있는 GPU가 두 Array의 합과 같은 계산에서 빠른 속도를 보일 것이라고 예측해볼 수 있음
+- GPU계산
+  - 2^28개의 원소를 가지는 두 Array의 합 계산
+  - 개요
+    - 각 Task는 자신이 맡은 Index의 Array의 합 수행
+    - Thread Block의 크기(하나의 Thread Block 안의 Thread의 개수)를 조절해가면서 테스트
+  - 코드
+    ```
+    int BLOCK_SIZE =64;//BLOCK당 THREAD의 개수 설정
+    //하나의 Task가 수행하는 함수
+    __global__ void SumArraysKernel(Array A, Array B, Array C) {
+        //계산이 수행어야 하는 task의 id(Array 내에서의 index라고 보면 됨)를 구해줌
+        int row = blockDim.y * blockIdx.y + threadIdx.y;
+        int col = blockDim.x * blockIdx.x + threadIdx.x;
+        int id = gridDim.x * blockDim.x * row + col;
+        //Array A와 Array B의 합을 c에 저장
+        C.elements[id] = A.elements[id] + B.elements[id];
+    }
+    ```
+  - 결과
+    - Block Size 8<br>
+      <img width="200" alt="image" src="https://user-images.githubusercontent.com/57051773/139009525-b1e3f496-a294-4f3b-87e4-67dbc10b1147.png">
+    - Block Size 16<br>
+      <img width="200" alt="image" src="https://user-images.githubusercontent.com/57051773/139009568-93c3515b-d8ee-4068-ba47-c7837823f06d.png">
+    - Block Size 32<br>
+      <img width="200" alt="image" src="https://user-images.githubusercontent.com/57051773/139009598-7f79aa0e-afcf-4886-8e62-ef38647ceb20.png">
+    - Block Size 64<br>
+      <img width="200" alt="image" src="https://user-images.githubusercontent.com/57051773/139009652-b3382375-dac6-4ac5-8f99-5fb1fce60984.png">
+    - Block Size 128<br>
+      <img width="200" alt="image" src="https://user-images.githubusercontent.com/57051773/139009690-244ecf26-07d9-4c39-87e4-6618e7587c26.png">
+    - Block Size 256<br>
+      <img width="200" alt="image" src="https://user-images.githubusercontent.com/57051773/139009724-6c02bbcb-df8f-40e7-a36c-7310a3fd17d6.png">
+    - Block Size 512<br>
+      <img width="200" alt="image" src="https://user-images.githubusercontent.com/57051773/139009752-55f619fe-7a9f-4101-a09a-b5cac8096991.png">
+    - Block Size 1024<br>
+      <img width="200" alt="image" src="https://user-images.githubusercontent.com/57051773/139009786-be34e208-76ba-4c92-bee3-385feab55f31.png">
+    - Block Size에 따라 속도가 달라지는 것을 확인할 수 있음
+      - 따라서 GPU SM안의 Core를 고려하여 적절히 Block의 크기를 정해주는 것이 필요
+- CPU
+  - 2^27개의 원소를 가지는 두 Array의 합 계산
+    - Memory 문제로 인해서 2^28개로 테스트 하지 못함
+  - 개요
+    - 각 Thread는 자신이 맡은 범위에 해당하는 Array의 합 계산
+    - 이전의 CPU Test에서 가장 빠른 속도를 보였던, 32를 Thread의 개수로 설정하여 테스트
+  - 코드
+    ```
+    #define MAX_THREADS 32//Thread의 개수 설정
+    void sum_array(void* vargp)//자신이 맡은 범위에 대한 계산 수행
+    {
+        long id = (*(long*)vargp);
+        long start = id * num_per_thread;
+        long end = start + num_per_thread;
+ 
+        if (end > MAX_N_ELEMENTS)
+            end = MAX_N_ELEMENTS;
+        long i;
+        for (i = start; i < end; i++)
+        {
+             C_RESULT[i] = A[i] + B[i];//array에서 자신이 맡은 영역의 array의 합을 구해주도록 함
+        }
+    }
+    ```
+  - 결과<br>
+    <img width="200" alt="image" src="https://user-images.githubusercontent.com/57051773/139010544-1672d591-a720-4b7d-8bad-ff4c7f1e6e6f.png">
+- 결과 정리
+  - CPU가 처리해야 하는 연산 숫자가 GPU에 비해 2배 적음에도 불구하고, Block Size에 관계없이 GPU가 더 빠른 것을 확인할 수 있음
+  - Block Size에 따라 GPU의 병렬 처리 속도가 다른 것을 확인할 수 있으므로, Block Size를 잘 고려하는 것이 중요함
 ### GPU(Non Shared Memory) vs GPU(Shared Memory)
 - 
