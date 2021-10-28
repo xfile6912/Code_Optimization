@@ -195,6 +195,7 @@
     <img width="400" alt="image" src="https://user-images.githubusercontent.com/57051773/138059197-54337595-e9ac-422f-b153-2aa8ed5e5f72.png">
     - Code Motion을 수행한 코드가 더 빠른 것을 확인할 수 있음
 - Instruction Scheduling
+-------
 ### CPU(Thread Num)
 ##### 1부터 N-1까지를 더하는 코드를 각 경우에 맞게 작성하여 시간을 측정
 - Global Variable만을 활용하는 경우
