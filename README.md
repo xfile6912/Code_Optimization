@@ -325,6 +325,7 @@
     ```
     Thread의 수 = CPU의 개수 * CPU활용도[0~1] * (1 + 작업시간 대비 대기시간의 비율)
     ```
+-------
 ### CPU vs GPU(CUDA)
 ##### 두 Array의 합을 구하는 코드를 통해 테스트
 - 사전지식 및 예측(GPU)
@@ -407,5 +408,6 @@
 - 결과 정리
   - CPU가 처리해야 하는 연산 숫자가 GPU에 비해 2배 적음에도 불구하고, Block Size에 관계없이 GPU가 더 빠른 것을 확인할 수 있음
   - Block Size에 따라 GPU의 병렬 처리 속도가 다른 것을 확인할 수 있으므로, Block Size를 잘 고려하는 것이 중요함
+-------
 ### GPU(Non Shared Memory) vs GPU(Shared Memory)
 - 
