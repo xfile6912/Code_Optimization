@@ -330,7 +330,7 @@
 ### CPU vs GPU(CUDA)
 ##### 두 Array의 합을 구하는 코드를 통해 테스트
 - 사전지식 및 예측(GPU)
-  - 1660Ti는 1536개의 CUDA 코어와, 24개의 SM(Streaming Multiprocessor)로 구성
+  - 1660Ti는 1536개의 CUDA 코어(PE)와, 24개의 SM(Streaming Multiprocessor)로 구성
     - 하나의 SM에는 1536/24 = 64개의 CUDA 코어가 포함되어 있음
   - 동일한 연산이 서로 다른 데이터에 대해 반복되고, 각 연산이 서로 독립적인 경우, GPU를 사용하는 것이 유리
     - SIMD방식: 하나의 연산을 동일한 형태로 존재하는 서로 다른 데이터 각각에 대해 병렬적으로 수행시키는 방법
@@ -411,4 +411,39 @@
   - Block Size에 따라 GPU의 병렬 처리 속도가 다른 것을 확인할 수 있으므로, Block Size를 잘 고려하는 것이 중요함
 -------
 ### GPU(Non Shared Memory) vs GPU(Shared Memory)
-- 
+- 사전지식(GPU)
+  - CUDA 메모리 계층 구조<br>
+    ![image](https://user-images.githubusercontent.com/57051773/139668775-adfbebf9-be1e-4f55-bb3b-62daa03e80bb.png)
+    - Register
+      - 각 PE는 Register File을 가지고 있음
+      - On Chip Memory로 가장 속도가 빠름
+      - PE에 배정된 Thread에서만 접근 가능하고 LifeTime 역시 해당 Thread와 같음
+    - Local Memory
+      - PE의 Register가 부족한 경우 Local Memory를 이용하게 됨
+      - Off Chip Memory로 속도가 느림
+      - PE에 배정된 Thread에서만 접근 가능하고 LifeTime 역시 해당 Thread와 같음
+    - Shared Memory
+      - 각 SM은 L1 data cache/Shared Memory를 가지고 있음
+      - On Chip Memory로 레지스터보다는 느리지만 속도가 빠름
+      - SM에 배정되는 Thread Block의 모든 Thread들에서 Shared Memory를 접근 가능하며 공유
+      - LifeTime 역시 해당 Thread Block과 같음
+    - Global Memory
+      - Off Chip Memory로 속도가 느림(수백 사이클)
+      - Host Application안의 모든 Thread들이 접근 가능하고, LifeTime은 Host Application과 같음
+    - Constant Memory
+      - Off Chip Memory로 상수 값을 저장하기 위한 메모리
+      - Host Application안의 모든 Thread들이 접근 가능하고, LifeTime은 Host Application과 같음
+      - 같은 Warp안의 모든 Thread가 같은 위치를 접근하는 경우 빠름
+      - Constant Cache가 있기 때문에 Global Memory보다는 빠름
+    - Texture Memory
+      - Off Chip Memory로 Texture 이미지를 저장하기 위한 메모리
+      - Host Application안의 모든 Thread들이 접근 가능하고, LifeTime은 Host Application과 같음
+      - 같은 Warp안의 모든 Thread가 물리적으로 인접한 위치를 접근하는 경우 빠름
+      - Texture Cache가 있기 때문에 Global Memory보다 빠름
+  - Global Memory 부가설명
+    - Global Memory 는 속도가 느림
+    - 병렬적 수행에 있어, Warp내의 32개의 Thread들로부터 32개의 메모리 접근 시도가 일어나게 됨
+    - 이러한 32번의 접근을 순차적으로 하는 것이 아닌, 메모리 접근시도를 최대한 합쳐서(Memory Coalescing), 적은횟수의 메모리 접근을 하고자 함
+    - Memory Coalescing을 하는 경우, 각 메모리 접근이 지역적으로 멀리 떨어져 있는 경우 여러 번의 메모리 접근이 필요하기 때문에 효율이 떨어지게 됨
+    - 따라서 프로그래머는 이러한 Memory 접근을 최적화하려는 노력을 통해 효율을 높여야 함
+    - 또한 자주 사용되는 Data에 대해서는 Global Memory를 이용하도록 프로그래밍 하는 것이 아닌, Shared Memory를 이용하도록 프로그래밍 하는 것이 좋음
