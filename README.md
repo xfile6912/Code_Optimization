@@ -447,3 +447,71 @@
     - Memory Coalescing을 하는 경우, 각 메모리 접근이 지역적으로 멀리 떨어져 있는 경우 여러 번의 메모리 접근이 필요하기 때문에 효율이 떨어지게 됨
     - 따라서 프로그래머는 이러한 Memory 접근을 최적화하려는 노력을 통해 효율을 높여야 함
     - 또한 자주 사용되는 Data에 대해서는 Global Memory를 이용하도록 프로그래밍 하는 것이 아닌, Shared Memory를 이용하도록 프로그래밍 하는 것이 좋음
+#### 배열의 index-Nf부터 index+Nf 까지의 원소의 합을 계산하는 코드를  통해 테스트
+- 개요
+  - Shared Memory를 사용하는 경우, 각 thread에서는 자신이 속한 thread block에서 공유되는 원소들을 shared buffer로 옮겨주고 sync후에 이를 이용하여 결과를 계산
+  - Global Memory는 Off Chip Memory이므로 속도가 느림
+  - Shared Memory는 On Chip Memory이므로 Global Memory에 비해 속도가 빠름
+  - 서로 인접한 thread에서는 사용하는 원소들이 거의 같음
+    ```
+    1. thread a가 담당하는 idx=i라고 하면, 인접한 thread b, c의 idx j, k는 i-1, i+1
+    2. thread a에서는 [i-Nf, i+Nf]의 합을 구함
+    3. thread b에서는 [j-Nf, j+Nf] = [i-Nf-1, i+Nf-1]의 합을 구함
+    4. thread c에서는 [k-Nf, k+Nf] = [i-Nf+1, i+Nf+1]의 합을 구함
+    5. 따라서 각 thread에서 공통적으로 사용되는 부분이 많기 때문에, 이를 Shared Memory로 옮겨서 처리하면 속도가 빠를 것임
+    ```
+- 코드(Shared Memory를 이용하지 않는 경우)
+  ```
+  //배열의 index-Nf 부터 index+Nf 데이터 까지의 합을 계산하는 GPU코드(Shared Memory를 사용하지 않음)
+  __global__ void sum_array_kernel_no_shared(IN int* d_arr, OUT int* d_sum_gpu, int N, int Nf) {
+        const unsigned block_id = blockIdx.y * gridDim.x + blockIdx.x;
+        const unsigned thread_id = threadIdx.y * blockDim.x + threadIdx.x;
+        const unsigned id = block_id * BLOCK_SIZE + thread_id;
+
+       //sum이라는 local변수를 사용하지 않은 이유는 sum local변수를 이용하게되면 레지스터를 활용하는 것이기 때문
+       for (int i = -Nf; i <= Nf; i++) {
+                if (id + i >= N || id + i < 0) continue;
+                      d_sum_gpu[id] += d_arr[id + i];
+       }
+  }
+  ```
+- 코드(Shared Memory를 이용하는 경우)
+  ```
+  extern __shared__ int shared_buffer[];   //Shared Memory 동적 할당
+  //배열의 index-Nf 부터 index+Nf 데이터 까지의 합을 계산하는 GPU코드(Shared Memory를 사용)
+  __global__ void sum_array_kernel_shared(IN int* d_arr, OUT int* d_sum_gpu, int N, int Nf) {
+        const unsigned block_id = blockIdx.y * gridDim.x + blockIdx.x;
+        const unsigned thread_id = threadIdx.y * blockDim.x + threadIdx.x;
+        const unsigned id = block_id * BLOCK_SIZE + thread_id;
+        int i;
+	
+        //threadid가 0인 경우는 shared memory의 왼쪽 끝 부분을 채워 줘야 함
+        if (thread_id == 0)
+        {
+                for (i = 0; i < Nf; i++)
+                {
+                        if (id + i < Nf) shared_buffer[i] = 0;
+                        else shared_buffer[i] = d_arr[id + i - Nf];
+                }
+        }
+        //threadid가 BLOCK_SIZE-1인 경우는 shared memory의 오른쪽 끝 부분을 채워줘야 함
+        if (thread_id == BLOCK_SIZE - 1)
+        {
+                for (i = 1; i <= Nf; i++)
+                {
+                        if (id + i >= N) shared_buffer[thread_id + i + Nf] = 0;
+                        else shared_buffer[thread_id + i + Nf] = d_arr[id + i];
+                }
+        }
+        shared_buffer[thread_id + Nf] = d_arr[id];
+        __syncthreads();//thread들의 sync를 맞추어줌
+        for (i = 0; i <= 2 * Nf; i++)
+        {
+               d_sum_gpu[id] += shared_buffer[thread_id + i];
+        }
+  }
+  ```
+- 결과정리<br>
+  <img width="450" alt="image" src="https://user-images.githubusercontent.com/57051773/142178094-1709cd9f-6ecb-4362-990d-45249588a897.png">
+  - Off Chip인 Global Memory를 사용하는 것보다, On Chip인 Shared Memory를 사용하는 것이 속도가 빠른 것을 확인할 수 있음
+
