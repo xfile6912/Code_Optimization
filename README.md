@@ -7,6 +7,12 @@
   - Graphic Card: NVIDIA GeForce GTX1660Ti 6GB
     - 1536 Cuda Cores, 24 SM(Streaming Multiprocessor)s
 
+### 순서
+- [Code Optimization 기법](#code-optimization-기법)
+- [CPU [Thread 개수에 따른 성능 비교]](#cpu)
+- [CPU vs GPU(CUDA)](#cpu-vs-gpu)
+- [GPU(without Shared Memory) vs GPU(with Shared Memory)](#gpu-without-shared-memory-vs-gpu-with-shared-memory)
+
 ### Code Optimization 기법
 - Spatial Locality
   - 개념
@@ -196,7 +202,7 @@
     - Code Motion을 수행한 코드가 더 빠른 것을 확인할 수 있음
 - Instruction Scheduling
 -------
-### CPU(Thread Num)
+### CPU
 ##### 1부터 N-1까지를 더하는 코드를 각 경우에 맞게 작성하여 시간을 측정
 - Global Variable만을 활용하는 경우
   - 개요
@@ -327,7 +333,7 @@
     Thread의 수 = CPU의 개수 * CPU활용도[0~1] * (1 + 작업시간 대비 대기시간의 비율)
     ```
 -------
-### CPU vs GPU(CUDA)
+### CPU vs GPU
 ##### 두 Array의 합을 구하는 코드를 통해 테스트
 - 사전지식 및 예측(GPU)
   - 1660Ti는 1536개의 CUDA 코어(PE)와, 24개의 SM(Streaming Multiprocessor)로 구성
@@ -410,7 +416,7 @@
   - CPU가 처리해야 하는 연산 숫자가 GPU에 비해 2배 적음에도 불구하고, Block Size에 관계없이 GPU가 더 빠른 것을 확인할 수 있음
   - Block Size에 따라 GPU의 병렬 처리 속도가 다른 것을 확인할 수 있으므로, Block Size를 잘 고려하는 것이 중요함
 -------
-### GPU(Non Shared Memory) vs GPU(Shared Memory)
+### GPU without Shared Memory vs GPU with Shared Memory
 - 사전지식(GPU)
   - CUDA 메모리 계층 구조<br>
     ![image](https://user-images.githubusercontent.com/57051773/139668775-adfbebf9-be1e-4f55-bb3b-62daa03e80bb.png)
