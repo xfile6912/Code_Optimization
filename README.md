@@ -9,7 +9,7 @@
 
 ### 순서
 - [Code Optimization 기법](#code-optimization-기법)
-- [CPU [Thread 개수에 따른 성능 비교]](#cpu)
+- [CPU [Thread 개수 및 메모리 접근 방식에 따른 성능 비교]](#cpu)
 - [CPU vs GPU(CUDA)](#cpu-vs-gpu)
 - [GPU(without Shared Memory) vs GPU(with Shared Memory)](#gpu-without-shared-memory-vs-gpu-with-shared-memory)
 
