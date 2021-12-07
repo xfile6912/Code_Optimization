@@ -270,7 +270,7 @@
   - 결과<br>
     <img width="500" alt="image" src="https://user-images.githubusercontent.com/57051773/138621083-7291746f-4549-476c-a986-dafd8b3d9879.png">
     - Thread의 수가 적절히 많아질 수록 속도가 빨라지는 경향을 확인할 수 있음
-      - 따라서 프로세서의 Core 수에 따라 적절히 Thread의 수를 정해주는 것이 필요
+      - 따라서 프로세서의 Core 수 및 작업에 따라 적절히 Thread의 수를 정해주는 것이 필요
     - Global Variable에 비해 속도가 빠른 것을 확인 할 수 있음
       - 각 Thread는 Global Array의 자신의 Index에 해당하는 부분만 접근하기 때문에 Semaphore를 사용하지 않음
       - 이를 통해 Semaphore에 따른 Overhead가 줄어들었기 때문에 속도가 빨라짐
@@ -319,7 +319,7 @@
   - 결과<br>
     <img width="500" alt="image" src="https://user-images.githubusercontent.com/57051773/138621714-6376341c-745d-4336-8f5f-9b9f8dad5f92.png">
     - Thread의 수가 적절히 많아질 수록 속도가 빨라지는 경향을 확인할 수 있음
-      - 따라서 프로세서의 Core 수에 따라 적절히 Thread의 수를 정해주는 것이 필요
+      - 따라서 프로세서의 Core 수 및 작업에 따라 적절히 Thread의 수를 정해주는 것이 필요
     - Global Array에 비해 속도가 빠른 것을 확인 할 수 있음
       - 각 thread에서 계산시 지역변수(local_sum)을 이용하게 되면 Compiler에 의해 Register를 사용하도록 하기 때문에 Memory Reference가 줄어들게 되고 속도가 더 빨라짐
 - Thread의 수 정리
