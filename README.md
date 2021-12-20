@@ -203,6 +203,7 @@
 - Instruction Scheduling
 -------
 ### CPU
+#### [Thread 개수 및 메모리 접근 방식에 따른 성능 비교]
 ##### 1부터 N-1까지를 더하는 코드를 각 경우에 맞게 작성하여 시간을 측정
 - Global Variable만을 활용하는 경우
   - 개요
